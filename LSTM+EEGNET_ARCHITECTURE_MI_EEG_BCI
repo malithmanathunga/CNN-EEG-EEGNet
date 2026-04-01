@@ -1,0 +1,920 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/malithmanathunga/CNN-EEG-EEGNet/blob/main/LSTM%2BEEGNET_ARCHITECTURE_MI_EEG_BCI\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "GYdg6pZy9jla",
+        "outputId": "77a9e449-1c1c-42aa-9476-06036d19ba57"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Drive already mounted at /content/drive; to attempt to forcibly remount, call drive.mount(\"/content/drive\", force_remount=True).\n"
+          ]
+        }
+      ],
+      "source": [
+        "from google.colab import drive\n",
+        "drive.mount('/content/drive')\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!pip install tensorflow\n",
+        "!pip install mne"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "UfgJTjO3qRVB",
+        "outputId": "f33b32c5-1377-4c9d-ad82-ac3da4916168"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Requirement already satisfied: tensorflow in /usr/local/lib/python3.12/dist-packages (2.20.0)\n",
+            "Requirement already satisfied: absl-py>=1.0.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (1.4.0)\n",
+            "Requirement already satisfied: astunparse>=1.6.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (1.6.3)\n",
+            "Requirement already satisfied: flatbuffers>=24.3.25 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (25.12.19)\n",
+            "Requirement already satisfied: gast!=0.5.0,!=0.5.1,!=0.5.2,>=0.2.1 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (0.7.0)\n",
+            "Requirement already satisfied: google_pasta>=0.1.1 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (0.2.0)\n",
+            "Requirement already satisfied: libclang>=13.0.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (18.1.1)\n",
+            "Requirement already satisfied: opt_einsum>=2.3.2 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (3.4.0)\n",
+            "Requirement already satisfied: packaging in /usr/local/lib/python3.12/dist-packages (from tensorflow) (26.0)\n",
+            "Requirement already satisfied: protobuf>=5.28.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (6.33.5)\n",
+            "Requirement already satisfied: requests<3,>=2.21.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (2.32.4)\n",
+            "Requirement already satisfied: setuptools in /usr/local/lib/python3.12/dist-packages (from tensorflow) (75.2.0)\n",
+            "Requirement already satisfied: six>=1.12.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (1.17.0)\n",
+            "Requirement already satisfied: termcolor>=1.1.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (3.3.0)\n",
+            "Requirement already satisfied: typing_extensions>=3.6.6 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (4.15.0)\n",
+            "Requirement already satisfied: wrapt>=1.11.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (2.1.0)\n",
+            "Requirement already satisfied: grpcio<2.0,>=1.24.3 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (1.76.0)\n",
+            "Requirement already satisfied: tensorboard~=2.20.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (2.20.0)\n",
+            "Requirement already satisfied: keras>=3.10.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (3.10.0)\n",
+            "Requirement already satisfied: numpy>=1.26.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (2.0.2)\n",
+            "Requirement already satisfied: h5py>=3.11.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (3.15.1)\n",
+            "Requirement already satisfied: ml_dtypes<1.0.0,>=0.5.1 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (0.5.4)\n",
+            "Requirement already satisfied: wheel<1.0,>=0.23.0 in /usr/local/lib/python3.12/dist-packages (from astunparse>=1.6.0->tensorflow) (0.46.3)\n",
+            "Requirement already satisfied: rich in /usr/local/lib/python3.12/dist-packages (from keras>=3.10.0->tensorflow) (14.3.2)\n",
+            "Requirement already satisfied: namex in /usr/local/lib/python3.12/dist-packages (from keras>=3.10.0->tensorflow) (0.1.0)\n",
+            "Requirement already satisfied: optree in /usr/local/lib/python3.12/dist-packages (from keras>=3.10.0->tensorflow) (0.18.0)\n",
+            "Requirement already satisfied: charset_normalizer<4,>=2 in /usr/local/lib/python3.12/dist-packages (from requests<3,>=2.21.0->tensorflow) (3.4.4)\n",
+            "Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.12/dist-packages (from requests<3,>=2.21.0->tensorflow) (3.11)\n",
+            "Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.12/dist-packages (from requests<3,>=2.21.0->tensorflow) (2.5.0)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.12/dist-packages (from requests<3,>=2.21.0->tensorflow) (2026.1.4)\n",
+            "Requirement already satisfied: markdown>=2.6.8 in /usr/lib/python3/dist-packages (from tensorboard~=2.20.0->tensorflow) (3.3.6)\n",
+            "Requirement already satisfied: pillow in /usr/local/lib/python3.12/dist-packages (from tensorboard~=2.20.0->tensorflow) (12.1.0)\n",
+            "Requirement already satisfied: tensorboard-data-server<0.8.0,>=0.7.0 in /usr/local/lib/python3.12/dist-packages (from tensorboard~=2.20.0->tensorflow) (0.7.2)\n",
+            "Requirement already satisfied: werkzeug>=1.0.1 in /usr/local/lib/python3.12/dist-packages (from tensorboard~=2.20.0->tensorflow) (3.1.5)\n",
+            "Requirement already satisfied: markupsafe>=2.1.1 in /usr/local/lib/python3.12/dist-packages (from werkzeug>=1.0.1->tensorboard~=2.20.0->tensorflow) (3.0.3)\n",
+            "Requirement already satisfied: markdown-it-py>=2.2.0 in /usr/local/lib/python3.12/dist-packages (from rich->keras>=3.10.0->tensorflow) (4.0.0)\n",
+            "Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /usr/local/lib/python3.12/dist-packages (from rich->keras>=3.10.0->tensorflow) (2.19.2)\n",
+            "Requirement already satisfied: mdurl~=0.1 in /usr/local/lib/python3.12/dist-packages (from markdown-it-py>=2.2.0->rich->keras>=3.10.0->tensorflow) (0.1.2)\n",
+            "Requirement already satisfied: mne in /usr/local/lib/python3.12/dist-packages (1.11.0)\n",
+            "Requirement already satisfied: decorator in /usr/local/lib/python3.12/dist-packages (from mne) (5.2.1)\n",
+            "Requirement already satisfied: jinja2 in /usr/local/lib/python3.12/dist-packages (from mne) (3.1.6)\n",
+            "Requirement already satisfied: lazy-loader>=0.3 in /usr/local/lib/python3.12/dist-packages (from mne) (0.4)\n",
+            "Requirement already satisfied: matplotlib>=3.8 in /usr/local/lib/python3.12/dist-packages (from mne) (3.10.0)\n",
+            "Requirement already satisfied: numpy<3,>=1.26 in /usr/local/lib/python3.12/dist-packages (from mne) (2.0.2)\n",
+            "Requirement already satisfied: packaging in /usr/local/lib/python3.12/dist-packages (from mne) (26.0)\n",
+            "Requirement already satisfied: pooch>=1.5 in /usr/local/lib/python3.12/dist-packages (from mne) (1.9.0)\n",
+            "Requirement already satisfied: scipy>=1.11 in /usr/local/lib/python3.12/dist-packages (from mne) (1.16.3)\n",
+            "Requirement already satisfied: tqdm in /usr/local/lib/python3.12/dist-packages (from mne) (4.67.2)\n",
+            "Requirement already satisfied: contourpy>=1.0.1 in /usr/local/lib/python3.12/dist-packages (from matplotlib>=3.8->mne) (1.3.3)\n",
+            "Requirement already satisfied: cycler>=0.10 in /usr/local/lib/python3.12/dist-packages (from matplotlib>=3.8->mne) (0.12.1)\n",
+            "Requirement already satisfied: fonttools>=4.22.0 in /usr/local/lib/python3.12/dist-packages (from matplotlib>=3.8->mne) (4.61.1)\n",
+            "Requirement already satisfied: kiwisolver>=1.3.1 in /usr/local/lib/python3.12/dist-packages (from matplotlib>=3.8->mne) (1.4.9)\n",
+            "Requirement already satisfied: pillow>=8 in /usr/local/lib/python3.12/dist-packages (from matplotlib>=3.8->mne) (12.1.0)\n",
+            "Requirement already satisfied: pyparsing>=2.3.1 in /usr/local/lib/python3.12/dist-packages (from matplotlib>=3.8->mne) (3.3.2)\n",
+            "Requirement already satisfied: python-dateutil>=2.7 in /usr/local/lib/python3.12/dist-packages (from matplotlib>=3.8->mne) (2.9.0.post0)\n",
+            "Requirement already satisfied: platformdirs>=2.5.0 in /usr/local/lib/python3.12/dist-packages (from pooch>=1.5->mne) (4.5.1)\n",
+            "Requirement already satisfied: requests>=2.19.0 in /usr/local/lib/python3.12/dist-packages (from pooch>=1.5->mne) (2.32.4)\n",
+            "Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.12/dist-packages (from jinja2->mne) (3.0.3)\n",
+            "Requirement already satisfied: six>=1.5 in /usr/local/lib/python3.12/dist-packages (from python-dateutil>=2.7->matplotlib>=3.8->mne) (1.17.0)\n",
+            "Requirement already satisfied: charset_normalizer<4,>=2 in /usr/local/lib/python3.12/dist-packages (from requests>=2.19.0->pooch>=1.5->mne) (3.4.4)\n",
+            "Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.12/dist-packages (from requests>=2.19.0->pooch>=1.5->mne) (3.11)\n",
+            "Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.12/dist-packages (from requests>=2.19.0->pooch>=1.5->mne) (2.5.0)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.12/dist-packages (from requests>=2.19.0->pooch>=1.5->mne) (2026.1.4)\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "zuJWIMy093-A",
+        "outputId": "cf96fd98-1c2f-4b39-d575-ecae904182b7"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "/usr/local/lib/python3.12/dist-packages/jax/_src/cloud_tpu_init.py:86: UserWarning: Transparent hugepages are not enabled. TPU runtime startup and shutdown time should be significantly improved on TPU v5e and newer. If not already set, you may need to enable transparent hugepages in your VM image (sudo sh -c \"echo always > /sys/kernel/mm/transparent_hugepage/enabled\")\n",
+            "  warnings.warn(\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "TensorFlow: 2.20.0\n",
+            "GPU: []\n"
+          ]
+        }
+      ],
+      "source": [
+        "\n",
+        "import os\n",
+        "os.environ[\"TF_CPP_MIN_LOG_LEVEL\"] = \"2\"\n",
+        "\n",
+        "import numpy as np\n",
+        "import glob\n",
+        "import h5py\n",
+        "\n",
+        "from scipy.signal import butter, filtfilt, resample\n",
+        "from sklearn.model_selection import train_test_split\n",
+        "from tensorflow.keras.utils import to_categorical\n",
+        "from tensorflow.keras.optimizers import Adam\n",
+        "from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau\n",
+        "from tensorflow.keras.layers import LSTM, Reshape\n",
+        "\n",
+        "\n",
+        "import tensorflow as tf\n",
+        "print(\"TensorFlow:\", tf.__version__)\n",
+        "print(\"GPU:\", tf.config.list_physical_devices('GPU'))\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "z5i_uOR299Xa"
+      },
+      "outputs": [],
+      "source": [
+        "def EEGNet_LSTM(nb_classes, Chans, Samples,\n",
+        "                dropoutRate=0.2, kernLength=64, F1=16, D=3, F2=32,\n",
+        "                lstm_units=32):\n",
+        "\n",
+        "    input1 = Input(shape=(Chans, Samples, 1))\n",
+        "\n",
+        "    # ===== Block 1: Temporal + Spatial =====\n",
+        "    block1 = Conv2D(F1, (1, kernLength), padding='same', use_bias=False)(input1)\n",
+        "    block1 = BatchNormalization()(block1)\n",
+        "    block1 = DepthwiseConv2D((Chans, 1),\n",
+        "                             depth_multiplier=D,\n",
+        "                             use_bias=False,\n",
+        "                             depthwise_constraint=max_norm(1.))(block1)\n",
+        "    block1 = BatchNormalization()(block1)\n",
+        "    block1 = Activation('elu')(block1)\n",
+        "    block1 = AveragePooling2D((1, 4))(block1)\n",
+        "    block1 = Dropout(dropoutRate)(block1)\n",
+        "\n",
+        "    # ===== Block 2: Spatio-temporal =====\n",
+        "    block2 = SeparableConv2D(F2, (1, 16), padding='same', use_bias=False)(block1)\n",
+        "    block2 = BatchNormalization()(block2)\n",
+        "    block2 = Activation('elu')(block2)\n",
+        "    block2 = AveragePooling2D((1, 8))(block2)\n",
+        "    block2 = Dropout(dropoutRate)(block2)\n",
+        "\n",
+        "    # ===== NEW PART: LSTM =====\n",
+        "    # block2 shape: (batch, 1, time, F2)\n",
+        "    # Reshape to: (batch, time, features)\n",
+        "    shape = block2.shape\n",
+        "    time_steps = shape[2]\n",
+        "    features   = shape[3]\n",
+        "\n",
+        "    x = Reshape((time_steps, features))(block2)\n",
+        "    x = LSTM(lstm_units, return_sequences=False)(x)\n",
+        "    x = Dropout(dropoutRate)(x)\n",
+        "\n",
+        "    # ===== Classifier =====\n",
+        "    dense = Dense(nb_classes, kernel_constraint=max_norm(0.25))(x)\n",
+        "    softmax = Activation('softmax')(dense)\n",
+        "\n",
+        "    return Model(inputs=input1, outputs=softmax)\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "96xqX9EK-Bz9",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "ec68a4e6-e1e0-4436-9984-72bfa96b73da"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Found MI files: 49\n",
+            "Example file: /content/drive/MyDrive/FYP/Data/MoveSep_session1_sub10_reaching_MI.mat\n"
+          ]
+        }
+      ],
+      "source": [
+        "DATA_DIR = \"/content/drive/MyDrive/FYP/Data\"\n",
+        "\n",
+        "mat_files = sorted(glob.glob(os.path.join(DATA_DIR, \"*MI.mat\")))\n",
+        "print(\"Found MI files:\", len(mat_files))\n",
+        "print(\"Example file:\", mat_files[0])\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import re\n",
+        "import h5py\n",
+        "import numpy as np\n",
+        "\n",
+        "TARGET_SAMPLES = 2500\n",
+        "\n",
+        "X_temp, y, subject_ids = [], [], []\n",
+        "\n",
+        "def normalize_trial(trial, target_len):\n",
+        "    trial = np.asarray(trial, dtype=np.float32)\n",
+        "\n",
+        "    if trial.ndim != 2:\n",
+        "        raise ValueError(f\"Invalid trial shape: {trial.shape}\")\n",
+        "\n",
+        "    ch, n = trial.shape\n",
+        "\n",
+        "    if n > target_len:\n",
+        "        trial = trial[:, :target_len]\n",
+        "    elif n < target_len:\n",
+        "        pad = np.zeros((ch, target_len - n), dtype=np.float32)\n",
+        "        trial = np.concatenate([trial, pad], axis=1)\n",
+        "\n",
+        "    return trial\n",
+        "\n",
+        "\n",
+        "for file in mat_files:\n",
+        "    # ---- extract subject ID from filename ----\n",
+        "    match = re.search(r\"sub(\\d+)\", file)\n",
+        "    if match is None:\n",
+        "        raise ValueError(f\"Subject ID not found in filename: {file}\")\n",
+        "    subj_id = int(match.group(1))\n",
+        "\n",
+        "    with h5py.File(file, \"r\") as f:\n",
+        "        ds = f[\"data_struct\"]\n",
+        "\n",
+        "        # ===================== UP =====================\n",
+        "        up_data = np.array(ds[\"up\"])              # (trials, samples, channels)\n",
+        "        up_data = np.transpose(up_data, (2, 1, 0)) # -> (channels, samples, trials)\n",
+        "\n",
+        "        for i in range(up_data.shape[2]):          # iterate over trials\n",
+        "            X_temp.append(normalize_trial(up_data[:, :, i], TARGET_SAMPLES))\n",
+        "            y.append(0)\n",
+        "            subject_ids.append(subj_id)\n",
+        "\n",
+        "        # ===================== DOWN ===================\n",
+        "        down_data = np.array(ds[\"down\"])\n",
+        "        down_data = np.transpose(down_data, (2, 1, 0))\n",
+        "\n",
+        "        for i in range(down_data.shape[2]):\n",
+        "            X_temp.append(normalize_trial(down_data[:, :, i], TARGET_SAMPLES))\n",
+        "            y.append(1)\n",
+        "            subject_ids.append(subj_id)\n",
+        "\n",
+        "\n",
+        "# ===================== STACK =====================\n",
+        "X = np.stack(X_temp, axis=0)   # (trials, channels, samples)\n",
+        "y = np.array(y)\n",
+        "subject_ids = np.array(subject_ids)\n",
+        "\n",
+        "print(\"Loaded EEG shape:\", X.shape)\n",
+        "print(\"Labels shape:\", y.shape)\n",
+        "print(\"Subject IDs shape:\", subject_ids.shape)\n",
+        "print(\"Channels:\", X.shape[1])\n",
+        "print(\"Samples :\", X.shape[2])\n",
+        "print(\"Number of Total Trails :\", X.shape[0])\n",
+        "\n"
+      ],
+      "metadata": {
+        "id": "P2JXh5s7R8lF",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "07187be9-a4fc-4f73-b52d-a48e94bf5c23"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Loaded EEG shape: (4696, 60, 2500)\n",
+            "Labels shape: (4696,)\n",
+            "Subject IDs shape: (4696,)\n",
+            "Channels: 60\n",
+            "Samples : 2500\n",
+            "Number of Total Trails : 4696\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# ==========================================================\n",
+        "# SELECT MOTOR IMAGERY CHANNELS ONLY\n",
+        "# ==========================================================\n",
+        "\n",
+        "# 1-based channel numbers given by you\n",
+        "#mi_channels_1based = [18,17,43,16,45,23,22,48,21,49,13,39]\n",
+        "\n",
+        "# Convert to 0-based indexing\n",
+        "#mi_channels = [ch - 1 for ch in mi_channels_1based]\n",
+        "\n",
+        "# Select channels\n",
+        "#X = X[:, mi_channels, :]\n",
+        "\n",
+        "#print(\"Selected channels:\", mi_channels_1based)\n",
+        "#print(\"New EEG shape after channel selection:\", X.shape)\n"
+      ],
+      "metadata": {
+        "id": "U3HBFVJcuZdZ"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "oKKxds-1_iKw",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "4d887540-74d7-4ae6-e679-df14525b0398"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Final input shape: (4696, 60, 500, 1)\n"
+          ]
+        }
+      ],
+      "source": [
+        "from scipy.signal import butter, filtfilt, resample\n",
+        "from tensorflow.keras.utils import to_categorical\n",
+        "import numpy as np\n",
+        "from mne.decoding import CSP\n",
+        "\n",
+        "# X shape: (trials, channels, samples)\n",
+        "# samples = 500 → fs = 500 Hz\n",
+        "\n",
+        "def preprocess_eeg(X, fs=500, target_fs=100, band=(8, 30)):\n",
+        "    \"\"\"\n",
+        "    X: (trials, channels, samples)\n",
+        "    \"\"\"\n",
+        "\n",
+        "    # ---------- Common Average Reference (CAR) ----------\n",
+        "    X = X - X.mean(axis=1, keepdims=True)\n",
+        "\n",
+        "    # ---------- Bandpass filtering ----------\n",
+        "    b, a = butter(4, band, btype='bandpass', fs=fs)\n",
+        "    X = filtfilt(b, a, X, axis=2)\n",
+        "\n",
+        "    # ---------- Downsampling ----------\n",
+        "    new_len = int(X.shape[2] * target_fs / fs)  # 2500 → 100\n",
+        "    X = resample(X, new_len, axis=2)\n",
+        "\n",
+        "    # ---------- Z-score normalization ----------\n",
+        "    X = (X - X.mean(axis=2, keepdims=True)) / (\n",
+        "        X.std(axis=2, keepdims=True) + 1e-8\n",
+        "    )\n",
+        "\n",
+        "    return X\n",
+        "\n",
+        "\n",
+        "# ================= APPLY =================\n",
+        "X = preprocess_eeg(X, fs=500, target_fs=100)\n",
+        "y = to_categorical(y, 2)\n",
+        "\n",
+        "# EEGNet input format: (trials, channels, samples, 1)\n",
+        "X = X[..., np.newaxis]\n",
+        "\n",
+        "print(\"Final input shape:\", X.shape)\n",
+        "\n",
+        "\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from sklearn.model_selection import train_test_split\n",
+        "import numpy as np\n",
+        "\n",
+        "# --------------------------------------------------\n",
+        "# 1. Create boolean masks based on subject IDs\n",
+        "# --------------------------------------------------\n",
+        "TEST_SUBJECTS = [3, 7, 12]   # example – change as needed\n",
+        "\n",
+        "test_mask = np.isin(subject_ids, TEST_SUBJECTS)\n",
+        "trainval_mask = ~test_mask\n",
+        "\n",
+        "# --------------------------------------------------\n",
+        "# 2. Split data: Train+Val vs Test (subject-based)\n",
+        "# --------------------------------------------------\n",
+        "X_test = X[test_mask]\n",
+        "y_test = y[test_mask]\n",
+        "\n",
+        "X_trainval = X[trainval_mask]\n",
+        "y_trainval = y[trainval_mask]\n",
+        "subject_ids_trainval = subject_ids[trainval_mask]\n",
+        "\n",
+        "print(\"Subjects used for TEST:\", np.unique(subject_ids[test_mask]))\n",
+        "print(\"Subjects used for TRAIN+VAL:\", np.unique(subject_ids_trainval))\n",
+        "\n",
+        "# --------------------------------------------------\n",
+        "# 3. Train / Validation split (ONLY within train subjects)\n",
+        "# --------------------------------------------------\n",
+        "X_train, X_val, y_train, y_val = train_test_split(\n",
+        "    X_trainval,\n",
+        "    y_trainval,\n",
+        "    test_size=0.1765,   # ≈ 15% of total when test is 30%\n",
+        "    random_state=42,\n",
+        "    stratify=y_trainval\n",
+        ")\n",
+        "\n",
+        "# --------------------------------------------------\n",
+        "# 4. Print final counts\n",
+        "# --------------------------------------------------\n",
+        "print(\"\\nFINAL SPLIT SIZES\")\n",
+        "print(\"Train:\", X_train.shape[0])\n",
+        "print(\"Val  :\", X_val.shape[0])\n",
+        "print(\"Test :\", X_test.shape[0])\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "MXHTV71vuEhH",
+        "outputId": "c49be17d-017e-4386-f410-66fc4805dc51"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Subjects used for TEST: [ 3  7 12]\n",
+            "Subjects used for TRAIN+VAL: [ 1  2  4  5  6  8  9 10 11 13 14 15 16 17 18]\n",
+            "\n",
+            "FINAL SPLIT SIZES\n",
+            "Train: 3331\n",
+            "Val  : 715\n",
+            "Test : 650\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "print(X_train.shape, X_val.shape, X_test.shape)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "i-jW39-eR8lo",
+        "outputId": "867413a5-a40e-4132-f549-a938a9fb81ff"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "(3331, 60, 500, 1) (715, 60, 500, 1) (650, 60, 500, 1)\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from tensorflow.keras.models import Model\n",
+        "from tensorflow.keras.layers import (\n",
+        "    Input,\n",
+        "    Conv2D,\n",
+        "    DepthwiseConv2D,\n",
+        "    SeparableConv2D,\n",
+        "    BatchNormalization,\n",
+        "    Activation,\n",
+        "    AveragePooling2D,\n",
+        "    Dropout,\n",
+        "    Dense,\n",
+        "    LSTM,\n",
+        "    Reshape\n",
+        ")\n",
+        "from tensorflow.keras.constraints import max_norm\n"
+      ],
+      "metadata": {
+        "id": "l8723GntA2R7"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 1000
+        },
+        "id": "uywTlcis_24Q",
+        "outputId": "8810bb1b-26f2-427d-d75d-f2e35a9e76f5"
+      },
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "\u001b[1mModel: \"functional\"\u001b[0m\n"
+            ],
+            "text/html": [
+              "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"font-weight: bold\">Model: \"functional\"</span>\n",
+              "</pre>\n"
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓\n",
+              "┃\u001b[1m \u001b[0m\u001b[1mLayer (type)                   \u001b[0m\u001b[1m \u001b[0m┃\u001b[1m \u001b[0m\u001b[1mOutput Shape          \u001b[0m\u001b[1m \u001b[0m┃\u001b[1m \u001b[0m\u001b[1m      Param #\u001b[0m\u001b[1m \u001b[0m┃\n",
+              "┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩\n",
+              "│ input_layer (\u001b[38;5;33mInputLayer\u001b[0m)        │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m60\u001b[0m, \u001b[38;5;34m500\u001b[0m, \u001b[38;5;34m1\u001b[0m)     │             \u001b[38;5;34m0\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ conv2d (\u001b[38;5;33mConv2D\u001b[0m)                 │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m60\u001b[0m, \u001b[38;5;34m500\u001b[0m, \u001b[38;5;34m16\u001b[0m)    │         \u001b[38;5;34m1,024\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ batch_normalization             │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m60\u001b[0m, \u001b[38;5;34m500\u001b[0m, \u001b[38;5;34m16\u001b[0m)    │            \u001b[38;5;34m64\u001b[0m │\n",
+              "│ (\u001b[38;5;33mBatchNormalization\u001b[0m)            │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ depthwise_conv2d                │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m1\u001b[0m, \u001b[38;5;34m500\u001b[0m, \u001b[38;5;34m48\u001b[0m)     │         \u001b[38;5;34m2,880\u001b[0m │\n",
+              "│ (\u001b[38;5;33mDepthwiseConv2D\u001b[0m)               │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ batch_normalization_1           │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m1\u001b[0m, \u001b[38;5;34m500\u001b[0m, \u001b[38;5;34m48\u001b[0m)     │           \u001b[38;5;34m192\u001b[0m │\n",
+              "│ (\u001b[38;5;33mBatchNormalization\u001b[0m)            │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ activation (\u001b[38;5;33mActivation\u001b[0m)         │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m1\u001b[0m, \u001b[38;5;34m500\u001b[0m, \u001b[38;5;34m48\u001b[0m)     │             \u001b[38;5;34m0\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ average_pooling2d               │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m1\u001b[0m, \u001b[38;5;34m125\u001b[0m, \u001b[38;5;34m48\u001b[0m)     │             \u001b[38;5;34m0\u001b[0m │\n",
+              "│ (\u001b[38;5;33mAveragePooling2D\u001b[0m)              │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ dropout (\u001b[38;5;33mDropout\u001b[0m)               │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m1\u001b[0m, \u001b[38;5;34m125\u001b[0m, \u001b[38;5;34m48\u001b[0m)     │             \u001b[38;5;34m0\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ separable_conv2d                │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m1\u001b[0m, \u001b[38;5;34m125\u001b[0m, \u001b[38;5;34m32\u001b[0m)     │         \u001b[38;5;34m2,304\u001b[0m │\n",
+              "│ (\u001b[38;5;33mSeparableConv2D\u001b[0m)               │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ batch_normalization_2           │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m1\u001b[0m, \u001b[38;5;34m125\u001b[0m, \u001b[38;5;34m32\u001b[0m)     │           \u001b[38;5;34m128\u001b[0m │\n",
+              "│ (\u001b[38;5;33mBatchNormalization\u001b[0m)            │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ activation_1 (\u001b[38;5;33mActivation\u001b[0m)       │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m1\u001b[0m, \u001b[38;5;34m125\u001b[0m, \u001b[38;5;34m32\u001b[0m)     │             \u001b[38;5;34m0\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ average_pooling2d_1             │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m1\u001b[0m, \u001b[38;5;34m15\u001b[0m, \u001b[38;5;34m32\u001b[0m)      │             \u001b[38;5;34m0\u001b[0m │\n",
+              "│ (\u001b[38;5;33mAveragePooling2D\u001b[0m)              │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ dropout_1 (\u001b[38;5;33mDropout\u001b[0m)             │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m1\u001b[0m, \u001b[38;5;34m15\u001b[0m, \u001b[38;5;34m32\u001b[0m)      │             \u001b[38;5;34m0\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ reshape (\u001b[38;5;33mReshape\u001b[0m)               │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m15\u001b[0m, \u001b[38;5;34m32\u001b[0m)         │             \u001b[38;5;34m0\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ lstm (\u001b[38;5;33mLSTM\u001b[0m)                     │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m32\u001b[0m)             │         \u001b[38;5;34m8,320\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ dropout_2 (\u001b[38;5;33mDropout\u001b[0m)             │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m32\u001b[0m)             │             \u001b[38;5;34m0\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ dense (\u001b[38;5;33mDense\u001b[0m)                   │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m2\u001b[0m)              │            \u001b[38;5;34m66\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ activation_2 (\u001b[38;5;33mActivation\u001b[0m)       │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m2\u001b[0m)              │             \u001b[38;5;34m0\u001b[0m │\n",
+              "└─────────────────────────────────┴────────────────────────┴───────────────┘\n"
+            ],
+            "text/html": [
+              "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\">┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓\n",
+              "┃<span style=\"font-weight: bold\"> Layer (type)                    </span>┃<span style=\"font-weight: bold\"> Output Shape           </span>┃<span style=\"font-weight: bold\">       Param # </span>┃\n",
+              "┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩\n",
+              "│ input_layer (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">InputLayer</span>)        │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">60</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">500</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>)     │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ conv2d (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Conv2D</span>)                 │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">60</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">500</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">16</span>)    │         <span style=\"color: #00af00; text-decoration-color: #00af00\">1,024</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ batch_normalization             │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">60</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">500</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">16</span>)    │            <span style=\"color: #00af00; text-decoration-color: #00af00\">64</span> │\n",
+              "│ (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">BatchNormalization</span>)            │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ depthwise_conv2d                │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">500</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">48</span>)     │         <span style=\"color: #00af00; text-decoration-color: #00af00\">2,880</span> │\n",
+              "│ (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">DepthwiseConv2D</span>)               │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ batch_normalization_1           │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">500</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">48</span>)     │           <span style=\"color: #00af00; text-decoration-color: #00af00\">192</span> │\n",
+              "│ (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">BatchNormalization</span>)            │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ activation (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Activation</span>)         │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">500</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">48</span>)     │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ average_pooling2d               │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">125</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">48</span>)     │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "│ (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">AveragePooling2D</span>)              │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ dropout (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Dropout</span>)               │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">125</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">48</span>)     │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ separable_conv2d                │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">125</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">32</span>)     │         <span style=\"color: #00af00; text-decoration-color: #00af00\">2,304</span> │\n",
+              "│ (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">SeparableConv2D</span>)               │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ batch_normalization_2           │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">125</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">32</span>)     │           <span style=\"color: #00af00; text-decoration-color: #00af00\">128</span> │\n",
+              "│ (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">BatchNormalization</span>)            │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ activation_1 (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Activation</span>)       │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">125</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">32</span>)     │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ average_pooling2d_1             │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">15</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">32</span>)      │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "│ (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">AveragePooling2D</span>)              │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ dropout_1 (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Dropout</span>)             │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">15</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">32</span>)      │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ reshape (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Reshape</span>)               │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">15</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">32</span>)         │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ lstm (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">LSTM</span>)                     │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">32</span>)             │         <span style=\"color: #00af00; text-decoration-color: #00af00\">8,320</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ dropout_2 (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Dropout</span>)             │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">32</span>)             │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ dense (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Dense</span>)                   │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">2</span>)              │            <span style=\"color: #00af00; text-decoration-color: #00af00\">66</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ activation_2 (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Activation</span>)       │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">2</span>)              │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "└─────────────────────────────────┴────────────────────────┴───────────────┘\n",
+              "</pre>\n"
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "\u001b[1m Total params: \u001b[0m\u001b[38;5;34m14,978\u001b[0m (58.51 KB)\n"
+            ],
+            "text/html": [
+              "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"font-weight: bold\"> Total params: </span><span style=\"color: #00af00; text-decoration-color: #00af00\">14,978</span> (58.51 KB)\n",
+              "</pre>\n"
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "\u001b[1m Trainable params: \u001b[0m\u001b[38;5;34m14,786\u001b[0m (57.76 KB)\n"
+            ],
+            "text/html": [
+              "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"font-weight: bold\"> Trainable params: </span><span style=\"color: #00af00; text-decoration-color: #00af00\">14,786</span> (57.76 KB)\n",
+              "</pre>\n"
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "\u001b[1m Non-trainable params: \u001b[0m\u001b[38;5;34m192\u001b[0m (768.00 B)\n"
+            ],
+            "text/html": [
+              "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"font-weight: bold\"> Non-trainable params: </span><span style=\"color: #00af00; text-decoration-color: #00af00\">192</span> (768.00 B)\n",
+              "</pre>\n"
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Epoch 1/300\n",
+            "209/209 - 9s - 45ms/step - accuracy: 0.5056 - loss: 0.6941 - val_accuracy: 0.4867 - val_loss: 0.6933 - learning_rate: 1.0000e-03\n",
+            "Epoch 2/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.5107 - loss: 0.6922 - val_accuracy: 0.4937 - val_loss: 0.6959 - learning_rate: 1.0000e-03\n",
+            "Epoch 3/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.5260 - loss: 0.6887 - val_accuracy: 0.4965 - val_loss: 0.7287 - learning_rate: 1.0000e-03\n",
+            "Epoch 4/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.5413 - loss: 0.6860 - val_accuracy: 0.4937 - val_loss: 0.6937 - learning_rate: 1.0000e-03\n",
+            "Epoch 5/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.5605 - loss: 0.6829 - val_accuracy: 0.5147 - val_loss: 0.6900 - learning_rate: 1.0000e-03\n",
+            "Epoch 6/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.5656 - loss: 0.6751 - val_accuracy: 0.5217 - val_loss: 0.6969 - learning_rate: 1.0000e-03\n",
+            "Epoch 7/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.5848 - loss: 0.6677 - val_accuracy: 0.5147 - val_loss: 0.6920 - learning_rate: 1.0000e-03\n",
+            "Epoch 8/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.5821 - loss: 0.6658 - val_accuracy: 0.5455 - val_loss: 0.7178 - learning_rate: 1.0000e-03\n",
+            "Epoch 9/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.6109 - loss: 0.6543 - val_accuracy: 0.5510 - val_loss: 0.7053 - learning_rate: 1.0000e-03\n",
+            "Epoch 10/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.6106 - loss: 0.6469 - val_accuracy: 0.5259 - val_loss: 0.6916 - learning_rate: 1.0000e-03\n",
+            "Epoch 11/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.6271 - loss: 0.6417 - val_accuracy: 0.5245 - val_loss: 0.7111 - learning_rate: 1.0000e-03\n",
+            "Epoch 12/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.6292 - loss: 0.6307 - val_accuracy: 0.5189 - val_loss: 0.7884 - learning_rate: 1.0000e-03\n",
+            "Epoch 13/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.6346 - loss: 0.6289 - val_accuracy: 0.5315 - val_loss: 0.6920 - learning_rate: 1.0000e-03\n",
+            "Epoch 14/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.6467 - loss: 0.6186 - val_accuracy: 0.5510 - val_loss: 0.7034 - learning_rate: 1.0000e-03\n",
+            "Epoch 15/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.6530 - loss: 0.6110 - val_accuracy: 0.5273 - val_loss: 0.7468 - learning_rate: 1.0000e-03\n",
+            "Epoch 16/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.6767 - loss: 0.6010 - val_accuracy: 0.5483 - val_loss: 0.7015 - learning_rate: 1.0000e-03\n",
+            "Epoch 17/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.6770 - loss: 0.5970 - val_accuracy: 0.5538 - val_loss: 0.7242 - learning_rate: 1.0000e-03\n",
+            "Epoch 18/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.6827 - loss: 0.5870 - val_accuracy: 0.5497 - val_loss: 0.6906 - learning_rate: 1.0000e-03\n",
+            "Epoch 19/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.6893 - loss: 0.5810 - val_accuracy: 0.5650 - val_loss: 0.6907 - learning_rate: 1.0000e-03\n",
+            "Epoch 20/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.6974 - loss: 0.5734 - val_accuracy: 0.5608 - val_loss: 0.7452 - learning_rate: 1.0000e-03\n",
+            "Epoch 21/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.7064 - loss: 0.5690 - val_accuracy: 0.5329 - val_loss: 0.7793 - learning_rate: 1.0000e-03\n",
+            "Epoch 22/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.7073 - loss: 0.5565 - val_accuracy: 0.5594 - val_loss: 0.7083 - learning_rate: 1.0000e-03\n",
+            "Epoch 23/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.7151 - loss: 0.5522 - val_accuracy: 0.5455 - val_loss: 0.7372 - learning_rate: 1.0000e-03\n",
+            "Epoch 24/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.7322 - loss: 0.5405 - val_accuracy: 0.5552 - val_loss: 0.7451 - learning_rate: 1.0000e-03\n",
+            "Epoch 25/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.7370 - loss: 0.5342 - val_accuracy: 0.5524 - val_loss: 0.7357 - learning_rate: 1.0000e-03\n",
+            "Epoch 26/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.7583 - loss: 0.5115 - val_accuracy: 0.5650 - val_loss: 0.7508 - learning_rate: 5.0000e-04\n",
+            "Epoch 27/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.7520 - loss: 0.5001 - val_accuracy: 0.5455 - val_loss: 0.7711 - learning_rate: 5.0000e-04\n",
+            "Epoch 28/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.7583 - loss: 0.5036 - val_accuracy: 0.5566 - val_loss: 0.7549 - learning_rate: 5.0000e-04\n",
+            "Epoch 29/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.7559 - loss: 0.4967 - val_accuracy: 0.5552 - val_loss: 0.7636 - learning_rate: 5.0000e-04\n",
+            "Epoch 30/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.7823 - loss: 0.4824 - val_accuracy: 0.5524 - val_loss: 0.7642 - learning_rate: 5.0000e-04\n",
+            "Epoch 31/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.7730 - loss: 0.4860 - val_accuracy: 0.5692 - val_loss: 0.7590 - learning_rate: 5.0000e-04\n",
+            "Epoch 32/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.7772 - loss: 0.4793 - val_accuracy: 0.5552 - val_loss: 0.7856 - learning_rate: 5.0000e-04\n",
+            "Epoch 33/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.7875 - loss: 0.4645 - val_accuracy: 0.5594 - val_loss: 0.7718 - learning_rate: 5.0000e-04\n",
+            "Epoch 34/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.7875 - loss: 0.4653 - val_accuracy: 0.5483 - val_loss: 0.7930 - learning_rate: 5.0000e-04\n",
+            "Epoch 35/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.7814 - loss: 0.4720 - val_accuracy: 0.5441 - val_loss: 0.7914 - learning_rate: 5.0000e-04\n",
+            "Epoch 36/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.7941 - loss: 0.4634 - val_accuracy: 0.5678 - val_loss: 0.7843 - learning_rate: 5.0000e-04\n",
+            "Epoch 37/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.8016 - loss: 0.4570 - val_accuracy: 0.5510 - val_loss: 0.8000 - learning_rate: 5.0000e-04\n",
+            "Epoch 38/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.7911 - loss: 0.4557 - val_accuracy: 0.5510 - val_loss: 0.8051 - learning_rate: 5.0000e-04\n",
+            "Epoch 39/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.7974 - loss: 0.4510 - val_accuracy: 0.5720 - val_loss: 0.7958 - learning_rate: 5.0000e-04\n",
+            "Epoch 40/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.8082 - loss: 0.4401 - val_accuracy: 0.5399 - val_loss: 0.8240 - learning_rate: 5.0000e-04\n",
+            "Epoch 41/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.8061 - loss: 0.4419 - val_accuracy: 0.5566 - val_loss: 0.8005 - learning_rate: 5.0000e-04\n",
+            "Epoch 42/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.8010 - loss: 0.4419 - val_accuracy: 0.5538 - val_loss: 0.7988 - learning_rate: 5.0000e-04\n",
+            "Epoch 43/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.8016 - loss: 0.4439 - val_accuracy: 0.5566 - val_loss: 0.8031 - learning_rate: 5.0000e-04\n",
+            "Epoch 44/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.8079 - loss: 0.4393 - val_accuracy: 0.5636 - val_loss: 0.7921 - learning_rate: 5.0000e-04\n",
+            "Epoch 45/300\n",
+            "209/209 - 7s - 35ms/step - accuracy: 0.8097 - loss: 0.4373 - val_accuracy: 0.5734 - val_loss: 0.7880 - learning_rate: 5.0000e-04\n",
+            "\n",
+            "================= FINAL ACCURACY =================\n",
+            "Train Accuracy : 0.5806\n",
+            "Val Accuracy   : 0.5147\n",
+            "Test Accuracy  : 0.5015\n",
+            "==================================================\n"
+          ]
+        }
+      ],
+      "source": [
+        "# ==========================================================\n",
+        "# ONE-HOT ENCODING\n",
+        "# ==========================================================\n",
+        "#y_train = to_categorical(y_train, 2)\n",
+        "#y_val   = to_categorical(y_val, 2)\n",
+        "#y_test  = to_categorical(y_test, 2)\n",
+        "\n",
+        "# ==========================================================\n",
+        "# BUILD EEGNET MODEL\n",
+        "# ==========================================================\n",
+        "model = EEGNet_LSTM(\n",
+        "    nb_classes=2,\n",
+        "    Chans=X.shape[1],\n",
+        "    Samples=X.shape[2],\n",
+        "    lstm_units=32\n",
+        ")\n",
+        "\n",
+        "model.compile(\n",
+        "    optimizer=Adam(learning_rate=1e-3),\n",
+        "    loss=\"categorical_crossentropy\",\n",
+        "    metrics=[\"accuracy\"]\n",
+        ")\n",
+        "\n",
+        "model.summary()\n",
+        "\n",
+        "# ==========================================================\n",
+        "# CALLBACKS\n",
+        "# ==========================================================\n",
+        "callbacks = [\n",
+        "    EarlyStopping(\n",
+        "        monitor=\"val_loss\",\n",
+        "        patience=40,\n",
+        "        restore_best_weights=True\n",
+        "    ),\n",
+        "    ReduceLROnPlateau(\n",
+        "        monitor=\"val_loss\",\n",
+        "        patience=20,\n",
+        "        factor=0.5,\n",
+        "        min_lr=1e-5\n",
+        "    )\n",
+        "]\n",
+        "\n",
+        "# ==========================================================\n",
+        "# TRAIN MODEL\n",
+        "# ==========================================================\n",
+        "history = model.fit(\n",
+        "    X_train, y_train,\n",
+        "    validation_data=(X_val, y_val),\n",
+        "    epochs=300,\n",
+        "    batch_size=16,\n",
+        "    callbacks=callbacks,\n",
+        "    verbose=2\n",
+        ")\n",
+        "\n",
+        "\n",
+        "# EVALUATION\n",
+        "\n",
+        "train_loss, train_acc = model.evaluate(X_train, y_train, verbose=0)\n",
+        "val_loss, val_acc     = model.evaluate(X_val, y_val, verbose=0)\n",
+        "test_loss, test_acc   = model.evaluate(X_test, y_test, verbose=0)\n",
+        "\n",
+        "print(\"\\n================= FINAL ACCURACY =================\")\n",
+        "print(f\"Train Accuracy : {train_acc:.4f}\")\n",
+        "print(f\"Val Accuracy   : {val_acc:.4f}\")\n",
+        "print(f\"Test Accuracy  : {test_acc:.4f}\")\n",
+        "print(\"==================================================\")"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "iGp8pHUnCiPx"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ],
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "machine_shape": "hm",
+      "gpuType": "V6E1",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "display_name": "Python 3",
+      "name": "python3"
+    },
+    "language_info": {
+      "name": "python"
+    },
+    "accelerator": "TPU"
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}

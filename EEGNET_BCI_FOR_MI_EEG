@@ -1,0 +1,1094 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/malithmanathunga/CNN-EEG-EEGNet/blob/main/EEGNET_BCI_FOR_MI_EEG\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "GYdg6pZy9jla",
+        "outputId": "1d84f96f-cd0d-445d-a7d0-ccbb6b0d004c"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Mounted at /content/drive\n"
+          ]
+        }
+      ],
+      "source": [
+        "from google.colab import drive\n",
+        "drive.mount('/content/drive')\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!pip install tensorflow\n",
+        "!pip install mne"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "UfgJTjO3qRVB",
+        "outputId": "4c518324-7b62-4777-90d5-64e4996d324a"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Collecting tensorflow\n",
+            "  Downloading tensorflow-2.20.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.5 kB)\n",
+            "Requirement already satisfied: absl-py>=1.0.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (1.4.0)\n",
+            "Collecting astunparse>=1.6.0 (from tensorflow)\n",
+            "  Downloading astunparse-1.6.3-py2.py3-none-any.whl.metadata (4.4 kB)\n",
+            "Collecting flatbuffers>=24.3.25 (from tensorflow)\n",
+            "  Downloading flatbuffers-25.12.19-py2.py3-none-any.whl.metadata (1.0 kB)\n",
+            "Requirement already satisfied: gast!=0.5.0,!=0.5.1,!=0.5.2,>=0.2.1 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (0.7.0)\n",
+            "Collecting google_pasta>=0.1.1 (from tensorflow)\n",
+            "  Downloading google_pasta-0.2.0-py3-none-any.whl.metadata (814 bytes)\n",
+            "Collecting libclang>=13.0.0 (from tensorflow)\n",
+            "  Downloading libclang-18.1.1-py2.py3-none-manylinux2010_x86_64.whl.metadata (5.2 kB)\n",
+            "Requirement already satisfied: opt_einsum>=2.3.2 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (3.4.0)\n",
+            "Requirement already satisfied: packaging in /usr/local/lib/python3.12/dist-packages (from tensorflow) (26.0)\n",
+            "Requirement already satisfied: protobuf>=5.28.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (6.33.5)\n",
+            "Requirement already satisfied: requests<3,>=2.21.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (2.32.4)\n",
+            "Requirement already satisfied: setuptools in /usr/local/lib/python3.12/dist-packages (from tensorflow) (75.2.0)\n",
+            "Requirement already satisfied: six>=1.12.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (1.17.0)\n",
+            "Requirement already satisfied: termcolor>=1.1.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (3.3.0)\n",
+            "Requirement already satisfied: typing_extensions>=3.6.6 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (4.15.0)\n",
+            "Requirement already satisfied: wrapt>=1.11.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (2.1.1)\n",
+            "Requirement already satisfied: grpcio<2.0,>=1.24.3 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (1.76.0)\n",
+            "Collecting tensorboard~=2.20.0 (from tensorflow)\n",
+            "  Downloading tensorboard-2.20.0-py3-none-any.whl.metadata (1.8 kB)\n",
+            "Requirement already satisfied: keras>=3.10.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (3.10.0)\n",
+            "Requirement already satisfied: numpy>=1.26.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (2.0.2)\n",
+            "Requirement already satisfied: h5py>=3.11.0 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (3.15.1)\n",
+            "Requirement already satisfied: ml_dtypes<1.0.0,>=0.5.1 in /usr/local/lib/python3.12/dist-packages (from tensorflow) (0.5.4)\n",
+            "Collecting wheel<1.0,>=0.23.0 (from astunparse>=1.6.0->tensorflow)\n",
+            "  Downloading wheel-0.46.3-py3-none-any.whl.metadata (2.4 kB)\n",
+            "Requirement already satisfied: rich in /usr/local/lib/python3.12/dist-packages (from keras>=3.10.0->tensorflow) (14.3.2)\n",
+            "Requirement already satisfied: namex in /usr/local/lib/python3.12/dist-packages (from keras>=3.10.0->tensorflow) (0.1.0)\n",
+            "Requirement already satisfied: optree in /usr/local/lib/python3.12/dist-packages (from keras>=3.10.0->tensorflow) (0.18.0)\n",
+            "Requirement already satisfied: charset_normalizer<4,>=2 in /usr/local/lib/python3.12/dist-packages (from requests<3,>=2.21.0->tensorflow) (3.4.4)\n",
+            "Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.12/dist-packages (from requests<3,>=2.21.0->tensorflow) (3.11)\n",
+            "Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.12/dist-packages (from requests<3,>=2.21.0->tensorflow) (2.5.0)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.12/dist-packages (from requests<3,>=2.21.0->tensorflow) (2026.1.4)\n",
+            "Requirement already satisfied: markdown>=2.6.8 in /usr/lib/python3/dist-packages (from tensorboard~=2.20.0->tensorflow) (3.3.6)\n",
+            "Requirement already satisfied: pillow in /usr/local/lib/python3.12/dist-packages (from tensorboard~=2.20.0->tensorflow) (12.1.0)\n",
+            "Collecting tensorboard-data-server<0.8.0,>=0.7.0 (from tensorboard~=2.20.0->tensorflow)\n",
+            "  Downloading tensorboard_data_server-0.7.2-py3-none-manylinux_2_31_x86_64.whl.metadata (1.1 kB)\n",
+            "Collecting werkzeug>=1.0.1 (from tensorboard~=2.20.0->tensorflow)\n",
+            "  Downloading werkzeug-3.1.5-py3-none-any.whl.metadata (4.0 kB)\n",
+            "Requirement already satisfied: markupsafe>=2.1.1 in /usr/local/lib/python3.12/dist-packages (from werkzeug>=1.0.1->tensorboard~=2.20.0->tensorflow) (3.0.3)\n",
+            "Requirement already satisfied: markdown-it-py>=2.2.0 in /usr/local/lib/python3.12/dist-packages (from rich->keras>=3.10.0->tensorflow) (4.0.0)\n",
+            "Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /usr/local/lib/python3.12/dist-packages (from rich->keras>=3.10.0->tensorflow) (2.19.2)\n",
+            "Requirement already satisfied: mdurl~=0.1 in /usr/local/lib/python3.12/dist-packages (from markdown-it-py>=2.2.0->rich->keras>=3.10.0->tensorflow) (0.1.2)\n",
+            "Downloading tensorflow-2.20.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (620.7 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m620.7/620.7 MB\u001b[0m \u001b[31m6.0 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading astunparse-1.6.3-py2.py3-none-any.whl (12 kB)\n",
+            "Downloading flatbuffers-25.12.19-py2.py3-none-any.whl (26 kB)\n",
+            "Downloading google_pasta-0.2.0-py3-none-any.whl (57 kB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m57.5/57.5 kB\u001b[0m \u001b[31m6.1 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading libclang-18.1.1-py2.py3-none-manylinux2010_x86_64.whl (24.5 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m24.5/24.5 MB\u001b[0m \u001b[31m142.0 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading tensorboard-2.20.0-py3-none-any.whl (5.5 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m5.5/5.5 MB\u001b[0m \u001b[31m23.3 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading tensorboard_data_server-0.7.2-py3-none-manylinux_2_31_x86_64.whl (6.6 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m6.6/6.6 MB\u001b[0m \u001b[31m157.9 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading werkzeug-3.1.5-py3-none-any.whl (225 kB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m225.0/225.0 kB\u001b[0m \u001b[31m23.7 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading wheel-0.46.3-py3-none-any.whl (30 kB)\n",
+            "Installing collected packages: libclang, flatbuffers, wheel, werkzeug, tensorboard-data-server, google_pasta, tensorboard, astunparse, tensorflow\n",
+            "Successfully installed astunparse-1.6.3 flatbuffers-25.12.19 google_pasta-0.2.0 libclang-18.1.1 tensorboard-2.20.0 tensorboard-data-server-0.7.2 tensorflow-2.20.0 werkzeug-3.1.5 wheel-0.46.3\n",
+            "Collecting mne\n",
+            "  Downloading mne-1.11.0-py3-none-any.whl.metadata (15 kB)\n",
+            "Requirement already satisfied: decorator in /usr/local/lib/python3.12/dist-packages (from mne) (5.2.1)\n",
+            "Requirement already satisfied: jinja2 in /usr/local/lib/python3.12/dist-packages (from mne) (3.1.6)\n",
+            "Requirement already satisfied: lazy-loader>=0.3 in /usr/local/lib/python3.12/dist-packages (from mne) (0.4)\n",
+            "Requirement already satisfied: matplotlib>=3.8 in /usr/local/lib/python3.12/dist-packages (from mne) (3.10.0)\n",
+            "Requirement already satisfied: numpy<3,>=1.26 in /usr/local/lib/python3.12/dist-packages (from mne) (2.0.2)\n",
+            "Requirement already satisfied: packaging in /usr/local/lib/python3.12/dist-packages (from mne) (26.0)\n",
+            "Requirement already satisfied: pooch>=1.5 in /usr/local/lib/python3.12/dist-packages (from mne) (1.9.0)\n",
+            "Requirement already satisfied: scipy>=1.11 in /usr/local/lib/python3.12/dist-packages (from mne) (1.16.3)\n",
+            "Requirement already satisfied: tqdm in /usr/local/lib/python3.12/dist-packages (from mne) (4.67.3)\n",
+            "Requirement already satisfied: contourpy>=1.0.1 in /usr/local/lib/python3.12/dist-packages (from matplotlib>=3.8->mne) (1.3.3)\n",
+            "Requirement already satisfied: cycler>=0.10 in /usr/local/lib/python3.12/dist-packages (from matplotlib>=3.8->mne) (0.12.1)\n",
+            "Requirement already satisfied: fonttools>=4.22.0 in /usr/local/lib/python3.12/dist-packages (from matplotlib>=3.8->mne) (4.61.1)\n",
+            "Requirement already satisfied: kiwisolver>=1.3.1 in /usr/local/lib/python3.12/dist-packages (from matplotlib>=3.8->mne) (1.4.9)\n",
+            "Requirement already satisfied: pillow>=8 in /usr/local/lib/python3.12/dist-packages (from matplotlib>=3.8->mne) (12.1.0)\n",
+            "Requirement already satisfied: pyparsing>=2.3.1 in /usr/local/lib/python3.12/dist-packages (from matplotlib>=3.8->mne) (3.3.2)\n",
+            "Requirement already satisfied: python-dateutil>=2.7 in /usr/local/lib/python3.12/dist-packages (from matplotlib>=3.8->mne) (2.9.0.post0)\n",
+            "Requirement already satisfied: platformdirs>=2.5.0 in /usr/local/lib/python3.12/dist-packages (from pooch>=1.5->mne) (4.5.1)\n",
+            "Requirement already satisfied: requests>=2.19.0 in /usr/local/lib/python3.12/dist-packages (from pooch>=1.5->mne) (2.32.4)\n",
+            "Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.12/dist-packages (from jinja2->mne) (3.0.3)\n",
+            "Requirement already satisfied: six>=1.5 in /usr/local/lib/python3.12/dist-packages (from python-dateutil>=2.7->matplotlib>=3.8->mne) (1.17.0)\n",
+            "Requirement already satisfied: charset_normalizer<4,>=2 in /usr/local/lib/python3.12/dist-packages (from requests>=2.19.0->pooch>=1.5->mne) (3.4.4)\n",
+            "Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.12/dist-packages (from requests>=2.19.0->pooch>=1.5->mne) (3.11)\n",
+            "Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.12/dist-packages (from requests>=2.19.0->pooch>=1.5->mne) (2.5.0)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.12/dist-packages (from requests>=2.19.0->pooch>=1.5->mne) (2026.1.4)\n",
+            "Downloading mne-1.11.0-py3-none-any.whl (7.5 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m7.5/7.5 MB\u001b[0m \u001b[31m110.1 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hInstalling collected packages: mne\n",
+            "Successfully installed mne-1.11.0\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "zuJWIMy093-A",
+        "outputId": "74bb2794-ea11-46a1-e806-52a9fd9a6560"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "/usr/local/lib/python3.12/dist-packages/jax/_src/cloud_tpu_init.py:86: UserWarning: Transparent hugepages are not enabled. TPU runtime startup and shutdown time should be significantly improved on TPU v5e and newer. If not already set, you may need to enable transparent hugepages in your VM image (sudo sh -c \"echo always > /sys/kernel/mm/transparent_hugepage/enabled\")\n",
+            "  warnings.warn(\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "TensorFlow: 2.20.0\n",
+            "GPU: []\n"
+          ]
+        }
+      ],
+      "source": [
+        "\n",
+        "import os\n",
+        "os.environ[\"TF_CPP_MIN_LOG_LEVEL\"] = \"2\"\n",
+        "\n",
+        "import numpy as np\n",
+        "import glob\n",
+        "import h5py\n",
+        "\n",
+        "from scipy.signal import butter, filtfilt, resample\n",
+        "from sklearn.model_selection import train_test_split\n",
+        "from tensorflow.keras.utils import to_categorical\n",
+        "from tensorflow.keras.optimizers import Adam\n",
+        "from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau\n",
+        "\n",
+        "import tensorflow as tf\n",
+        "print(\"TensorFlow:\", tf.__version__)\n",
+        "print(\"GPU:\", tf.config.list_physical_devices('GPU'))\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "z5i_uOR299Xa"
+      },
+      "outputs": [],
+      "source": [
+        "from tensorflow.keras.models import Model\n",
+        "from tensorflow.keras.layers import (Input, Conv2D, DepthwiseConv2D,\n",
+        "                                     SeparableConv2D, BatchNormalization,\n",
+        "                                     Activation, AveragePooling2D,\n",
+        "                                     Dropout, Flatten, Dense)\n",
+        "from tensorflow.keras.constraints import max_norm\n",
+        "\n",
+        "\n",
+        "def EEGNet(nb_classes, Chans, Samples,\n",
+        "           dropoutRate=0.6, kernLength=32, F1=8, D=3, F2=32):\n",
+        "\n",
+        "    input1 = Input(shape=(Chans, Samples, 1))\n",
+        "\n",
+        "    block1 = Conv2D(F1, (1, kernLength), padding='same', use_bias=False)(input1)\n",
+        "    block1 = BatchNormalization()(block1)\n",
+        "    block1 = DepthwiseConv2D((Chans, 1),\n",
+        "                             depth_multiplier=D,\n",
+        "                             use_bias=False,\n",
+        "                             depthwise_constraint=max_norm(1.))(block1)\n",
+        "    block1 = BatchNormalization()(block1)\n",
+        "    block1 = Activation('elu')(block1)\n",
+        "    block1 = AveragePooling2D((1, 4))(block1)\n",
+        "    block1 = Dropout(dropoutRate)(block1)\n",
+        "\n",
+        "    block2 = SeparableConv2D(F2, (1, 16), padding='same', use_bias=False)(block1)\n",
+        "    block2 = BatchNormalization()(block2)\n",
+        "    block2 = Activation('elu')(block2)\n",
+        "    block2 = AveragePooling2D((1, 8))(block2)\n",
+        "    block2 = Dropout(dropoutRate)(block2)\n",
+        "\n",
+        "    flatten = Flatten()(block2)\n",
+        "    dense = Dense(nb_classes, kernel_constraint=max_norm(0.25))(flatten)\n",
+        "    softmax = Activation('softmax')(dense)\n",
+        "\n",
+        "    return Model(inputs=input1, outputs=softmax)\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "96xqX9EK-Bz9",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "de2b7492-5f96-4207-8e78-d2ae971c70b1"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Found MI files: 49\n",
+            "Example file: /content/drive/MyDrive/FYP/Data/MoveSep_session1_sub10_reaching_MI.mat\n"
+          ]
+        }
+      ],
+      "source": [
+        "DATA_DIR = \"/content/drive/MyDrive/FYP/Data\"\n",
+        "\n",
+        "mat_files = sorted(glob.glob(os.path.join(DATA_DIR, \"*MI.mat\")))\n",
+        "print(\"Found MI files:\", len(mat_files))\n",
+        "print(\"Example file:\", mat_files[0])\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import re\n",
+        "import h5py\n",
+        "import numpy as np\n",
+        "\n",
+        "TARGET_SAMPLES = 2500\n",
+        "\n",
+        "X_temp, y, subject_ids = [], [], []\n",
+        "\n",
+        "def normalize_trial(trial, target_len):\n",
+        "    trial = np.asarray(trial, dtype=np.float32)\n",
+        "\n",
+        "    if trial.ndim != 2:\n",
+        "        raise ValueError(f\"Invalid trial shape: {trial.shape}\")\n",
+        "\n",
+        "    ch, n = trial.shape\n",
+        "\n",
+        "    if n > target_len:\n",
+        "        trial = trial[:, :target_len]\n",
+        "    elif n < target_len:\n",
+        "        pad = np.zeros((ch, target_len - n), dtype=np.float32)\n",
+        "        trial = np.concatenate([trial, pad], axis=1)\n",
+        "\n",
+        "    return trial\n",
+        "\n",
+        "\n",
+        "for file in mat_files:\n",
+        "    # ---- extract subject ID from filename ----\n",
+        "    match = re.search(r\"sub(\\d+)\", file)\n",
+        "    if match is None:\n",
+        "        raise ValueError(f\"Subject ID not found in filename: {file}\")\n",
+        "    subj_id = int(match.group(1))\n",
+        "\n",
+        "    with h5py.File(file, \"r\") as f:\n",
+        "        ds = f[\"data_struct\"]\n",
+        "\n",
+        "        # ===================== UP =====================\n",
+        "        up_data = np.array(ds[\"up\"])              # (trials, samples, channels)\n",
+        "        up_data = np.transpose(up_data, (2, 1, 0)) # -> (channels, samples, trials)\n",
+        "\n",
+        "        for i in range(up_data.shape[2]):          # iterate over trials\n",
+        "            X_temp.append(normalize_trial(up_data[:, :, i], TARGET_SAMPLES))\n",
+        "            y.append(0)\n",
+        "            subject_ids.append(subj_id)\n",
+        "\n",
+        "        # ===================== DOWN ===================\n",
+        "        down_data = np.array(ds[\"down\"])\n",
+        "        down_data = np.transpose(down_data, (2, 1, 0))\n",
+        "\n",
+        "        for i in range(down_data.shape[2]):\n",
+        "            X_temp.append(normalize_trial(down_data[:, :, i], TARGET_SAMPLES))\n",
+        "            y.append(1)\n",
+        "            subject_ids.append(subj_id)\n",
+        "\n",
+        "\n",
+        "# ===================== STACK =====================\n",
+        "X = np.stack(X_temp, axis=0)   # (trials, channels, samples)\n",
+        "y = np.array(y)\n",
+        "subject_ids = np.array(subject_ids)\n",
+        "\n",
+        "print(\"Loaded EEG shape:\", X.shape)\n",
+        "print(\"Labels shape:\", y.shape)\n",
+        "print(\"Subject IDs shape:\", subject_ids.shape)\n",
+        "print(\"Channels:\", X.shape[1])\n",
+        "print(\"Samples :\", X.shape[2])\n",
+        "print(\"Number of Total Trails :\", X.shape[0])\n",
+        "\n"
+      ],
+      "metadata": {
+        "id": "P2JXh5s7R8lF",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "8b6bc1b0-3562-48cd-adeb-4198726106eb"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Loaded EEG shape: (4696, 60, 2500)\n",
+            "Labels shape: (4696,)\n",
+            "Subject IDs shape: (4696,)\n",
+            "Channels: 60\n",
+            "Samples : 2500\n",
+            "Number of Total Trails : 4696\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\n",
+        "# SELECT MOTOR IMAGERY CHANNELS ONLY\n",
+        "\n",
+        "\n",
+        "# 1-based channel numbers\n",
+        "#mi_channels_1based = [18,17,43,16,45,23,22,48,21,49,13,39]\n",
+        "\n",
+        "# Convert to 0-based indexing\n",
+        "#mi_channels = [ch - 1 for ch in mi_channels_1based]\n",
+        "\n",
+        "# Select channels\n",
+        "#X = X[:, mi_channels, :]\n",
+        "\n",
+        "#print(\"Selected channels:\", mi_channels_1based)\n",
+        "#print(\"New EEG shape after channel selection:\", X.shape)\n"
+      ],
+      "metadata": {
+        "id": "U3HBFVJcuZdZ"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "oKKxds-1_iKw",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "90c01ee0-f84c-4cbf-bf9c-8ff4cf6bc19c"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Final input shape: (4696, 60, 500, 1)\n"
+          ]
+        }
+      ],
+      "source": [
+        "from scipy.signal import butter, filtfilt, resample\n",
+        "from tensorflow.keras.utils import to_categorical\n",
+        "import numpy as np\n",
+        "from mne.decoding import CSP\n",
+        "\n",
+        "# X shape: (trials, channels, samples)\n",
+        "# samples = 500 → fs = 500 Hz\n",
+        "\n",
+        "def preprocess_eeg(X, fs=500, target_fs=100, band=(4, 40)):\n",
+        "    \"\"\"\n",
+        "    X: (trials, channels, samples)\n",
+        "    \"\"\"\n",
+        "\n",
+        "    # ---------- Common Average Reference (CAR) ----------\n",
+        "    X = X - X.mean(axis=1, keepdims=True)\n",
+        "\n",
+        "    # ---------- Bandpass filtering ----------\n",
+        "    b, a = butter(4, band, btype='bandpass', fs=fs)\n",
+        "    X = filtfilt(b, a, X, axis=2)\n",
+        "\n",
+        "    # ---------- Downsampling ----------\n",
+        "    new_len = int(X.shape[2] * target_fs / fs)  # 2500 → 100\n",
+        "    X = resample(X, new_len, axis=2)\n",
+        "\n",
+        "    # ---------- Z-score normalization ----------\n",
+        "    X = (X - X.mean(axis=2, keepdims=True)) / (\n",
+        "        X.std(axis=2, keepdims=True) + 1e-8\n",
+        "    )\n",
+        "\n",
+        "    return X\n",
+        "\n",
+        "\n",
+        "# ================= APPLY =================\n",
+        "X = preprocess_eeg(X, fs=500, target_fs=100)\n",
+        "y = to_categorical(y, 2)\n",
+        "\n",
+        "# EEGNet input format: (trials, channels, samples, 1)\n",
+        "X = X[..., np.newaxis]\n",
+        "\n",
+        "print(\"Final input shape:\", X.shape)\n",
+        "\n",
+        "\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from sklearn.model_selection import train_test_split\n",
+        "import numpy as np\n",
+        "\n",
+        "# --------------------------------------------------\n",
+        "# 1. Create boolean masks based on subject IDs\n",
+        "# --------------------------------------------------\n",
+        "TEST_SUBJECTS = [3, 7, 12]   # example – change as needed\n",
+        "\n",
+        "test_mask = np.isin(subject_ids, TEST_SUBJECTS)\n",
+        "trainval_mask = ~test_mask\n",
+        "\n",
+        "# --------------------------------------------------\n",
+        "# 2. Split data: Train+Val vs Test (subject-based)\n",
+        "# --------------------------------------------------\n",
+        "X_test = X[test_mask]\n",
+        "y_test = y[test_mask]\n",
+        "\n",
+        "X_trainval = X[trainval_mask]\n",
+        "y_trainval = y[trainval_mask]\n",
+        "subject_ids_trainval = subject_ids[trainval_mask]\n",
+        "\n",
+        "print(\"Subjects used for TEST:\", np.unique(subject_ids[test_mask]))\n",
+        "print(\"Subjects used for TRAIN+VAL:\", np.unique(subject_ids_trainval))\n",
+        "\n",
+        "# --------------------------------------------------\n",
+        "# 3. Train / Validation split (ONLY within train subjects)\n",
+        "# --------------------------------------------------\n",
+        "X_train, X_val, y_train, y_val = train_test_split(\n",
+        "    X_trainval,\n",
+        "    y_trainval,\n",
+        "    test_size=0.1765,   # ≈ 15% of total when test is 30%\n",
+        "    random_state=42,\n",
+        "    stratify=y_trainval\n",
+        ")\n",
+        "\n",
+        "# --------------------------------------------------\n",
+        "# 4. Print final counts\n",
+        "# --------------------------------------------------\n",
+        "print(\"\\nFINAL SPLIT SIZES\")\n",
+        "print(\"Train:\", X_train.shape[0])\n",
+        "print(\"Val  :\", X_val.shape[0])\n",
+        "print(\"Test :\", X_test.shape[0])\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "MXHTV71vuEhH",
+        "outputId": "0bd5654a-86a8-41e7-a0ac-689cd2c61833"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Subjects used for TEST: [ 3  7 12]\n",
+            "Subjects used for TRAIN+VAL: [ 1  2  4  5  6  8  9 10 11 13 14 15 16 17 18]\n",
+            "\n",
+            "FINAL SPLIT SIZES\n",
+            "Train: 3331\n",
+            "Val  : 715\n",
+            "Test : 650\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "print(X_train.shape, X_val.shape, X_test.shape)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "i-jW39-eR8lo",
+        "outputId": "6b8593e6-9eb8-4ff3-d22c-62af59f0757f"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "(3331, 60, 500, 1) (715, 60, 500, 1) (650, 60, 500, 1)\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 1000
+        },
+        "id": "uywTlcis_24Q",
+        "outputId": "4e4103d8-1ce7-4189-d6c6-cf8985d4d4db"
+      },
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "\u001b[1mModel: \"functional\"\u001b[0m\n"
+            ],
+            "text/html": [
+              "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"font-weight: bold\">Model: \"functional\"</span>\n",
+              "</pre>\n"
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓\n",
+              "┃\u001b[1m \u001b[0m\u001b[1mLayer (type)                   \u001b[0m\u001b[1m \u001b[0m┃\u001b[1m \u001b[0m\u001b[1mOutput Shape          \u001b[0m\u001b[1m \u001b[0m┃\u001b[1m \u001b[0m\u001b[1m      Param #\u001b[0m\u001b[1m \u001b[0m┃\n",
+              "┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩\n",
+              "│ input_layer (\u001b[38;5;33mInputLayer\u001b[0m)        │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m60\u001b[0m, \u001b[38;5;34m500\u001b[0m, \u001b[38;5;34m1\u001b[0m)     │             \u001b[38;5;34m0\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ conv2d (\u001b[38;5;33mConv2D\u001b[0m)                 │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m60\u001b[0m, \u001b[38;5;34m500\u001b[0m, \u001b[38;5;34m8\u001b[0m)     │           \u001b[38;5;34m256\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ batch_normalization             │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m60\u001b[0m, \u001b[38;5;34m500\u001b[0m, \u001b[38;5;34m8\u001b[0m)     │            \u001b[38;5;34m32\u001b[0m │\n",
+              "│ (\u001b[38;5;33mBatchNormalization\u001b[0m)            │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ depthwise_conv2d                │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m1\u001b[0m, \u001b[38;5;34m500\u001b[0m, \u001b[38;5;34m24\u001b[0m)     │         \u001b[38;5;34m1,440\u001b[0m │\n",
+              "│ (\u001b[38;5;33mDepthwiseConv2D\u001b[0m)               │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ batch_normalization_1           │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m1\u001b[0m, \u001b[38;5;34m500\u001b[0m, \u001b[38;5;34m24\u001b[0m)     │            \u001b[38;5;34m96\u001b[0m │\n",
+              "│ (\u001b[38;5;33mBatchNormalization\u001b[0m)            │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ activation (\u001b[38;5;33mActivation\u001b[0m)         │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m1\u001b[0m, \u001b[38;5;34m500\u001b[0m, \u001b[38;5;34m24\u001b[0m)     │             \u001b[38;5;34m0\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ average_pooling2d               │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m1\u001b[0m, \u001b[38;5;34m125\u001b[0m, \u001b[38;5;34m24\u001b[0m)     │             \u001b[38;5;34m0\u001b[0m │\n",
+              "│ (\u001b[38;5;33mAveragePooling2D\u001b[0m)              │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ dropout (\u001b[38;5;33mDropout\u001b[0m)               │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m1\u001b[0m, \u001b[38;5;34m125\u001b[0m, \u001b[38;5;34m24\u001b[0m)     │             \u001b[38;5;34m0\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ separable_conv2d                │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m1\u001b[0m, \u001b[38;5;34m125\u001b[0m, \u001b[38;5;34m32\u001b[0m)     │         \u001b[38;5;34m1,152\u001b[0m │\n",
+              "│ (\u001b[38;5;33mSeparableConv2D\u001b[0m)               │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ batch_normalization_2           │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m1\u001b[0m, \u001b[38;5;34m125\u001b[0m, \u001b[38;5;34m32\u001b[0m)     │           \u001b[38;5;34m128\u001b[0m │\n",
+              "│ (\u001b[38;5;33mBatchNormalization\u001b[0m)            │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ activation_1 (\u001b[38;5;33mActivation\u001b[0m)       │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m1\u001b[0m, \u001b[38;5;34m125\u001b[0m, \u001b[38;5;34m32\u001b[0m)     │             \u001b[38;5;34m0\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ average_pooling2d_1             │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m1\u001b[0m, \u001b[38;5;34m15\u001b[0m, \u001b[38;5;34m32\u001b[0m)      │             \u001b[38;5;34m0\u001b[0m │\n",
+              "│ (\u001b[38;5;33mAveragePooling2D\u001b[0m)              │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ dropout_1 (\u001b[38;5;33mDropout\u001b[0m)             │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m1\u001b[0m, \u001b[38;5;34m15\u001b[0m, \u001b[38;5;34m32\u001b[0m)      │             \u001b[38;5;34m0\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ flatten (\u001b[38;5;33mFlatten\u001b[0m)               │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m480\u001b[0m)            │             \u001b[38;5;34m0\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ dense (\u001b[38;5;33mDense\u001b[0m)                   │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m2\u001b[0m)              │           \u001b[38;5;34m962\u001b[0m │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ activation_2 (\u001b[38;5;33mActivation\u001b[0m)       │ (\u001b[38;5;45mNone\u001b[0m, \u001b[38;5;34m2\u001b[0m)              │             \u001b[38;5;34m0\u001b[0m │\n",
+              "└─────────────────────────────────┴────────────────────────┴───────────────┘\n"
+            ],
+            "text/html": [
+              "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\">┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓\n",
+              "┃<span style=\"font-weight: bold\"> Layer (type)                    </span>┃<span style=\"font-weight: bold\"> Output Shape           </span>┃<span style=\"font-weight: bold\">       Param # </span>┃\n",
+              "┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩\n",
+              "│ input_layer (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">InputLayer</span>)        │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">60</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">500</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>)     │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ conv2d (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Conv2D</span>)                 │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">60</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">500</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">8</span>)     │           <span style=\"color: #00af00; text-decoration-color: #00af00\">256</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ batch_normalization             │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">60</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">500</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">8</span>)     │            <span style=\"color: #00af00; text-decoration-color: #00af00\">32</span> │\n",
+              "│ (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">BatchNormalization</span>)            │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ depthwise_conv2d                │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">500</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">24</span>)     │         <span style=\"color: #00af00; text-decoration-color: #00af00\">1,440</span> │\n",
+              "│ (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">DepthwiseConv2D</span>)               │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ batch_normalization_1           │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">500</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">24</span>)     │            <span style=\"color: #00af00; text-decoration-color: #00af00\">96</span> │\n",
+              "│ (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">BatchNormalization</span>)            │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ activation (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Activation</span>)         │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">500</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">24</span>)     │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ average_pooling2d               │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">125</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">24</span>)     │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "│ (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">AveragePooling2D</span>)              │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ dropout (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Dropout</span>)               │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">125</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">24</span>)     │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ separable_conv2d                │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">125</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">32</span>)     │         <span style=\"color: #00af00; text-decoration-color: #00af00\">1,152</span> │\n",
+              "│ (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">SeparableConv2D</span>)               │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ batch_normalization_2           │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">125</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">32</span>)     │           <span style=\"color: #00af00; text-decoration-color: #00af00\">128</span> │\n",
+              "│ (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">BatchNormalization</span>)            │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ activation_1 (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Activation</span>)       │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">125</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">32</span>)     │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ average_pooling2d_1             │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">15</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">32</span>)      │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "│ (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">AveragePooling2D</span>)              │                        │               │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ dropout_1 (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Dropout</span>)             │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">1</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">15</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">32</span>)      │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ flatten (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Flatten</span>)               │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">480</span>)            │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ dense (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Dense</span>)                   │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">2</span>)              │           <span style=\"color: #00af00; text-decoration-color: #00af00\">962</span> │\n",
+              "├─────────────────────────────────┼────────────────────────┼───────────────┤\n",
+              "│ activation_2 (<span style=\"color: #0087ff; text-decoration-color: #0087ff\">Activation</span>)       │ (<span style=\"color: #00d7ff; text-decoration-color: #00d7ff\">None</span>, <span style=\"color: #00af00; text-decoration-color: #00af00\">2</span>)              │             <span style=\"color: #00af00; text-decoration-color: #00af00\">0</span> │\n",
+              "└─────────────────────────────────┴────────────────────────┴───────────────┘\n",
+              "</pre>\n"
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "\u001b[1m Total params: \u001b[0m\u001b[38;5;34m4,066\u001b[0m (15.88 KB)\n"
+            ],
+            "text/html": [
+              "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"font-weight: bold\"> Total params: </span><span style=\"color: #00af00; text-decoration-color: #00af00\">4,066</span> (15.88 KB)\n",
+              "</pre>\n"
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "\u001b[1m Trainable params: \u001b[0m\u001b[38;5;34m3,938\u001b[0m (15.38 KB)\n"
+            ],
+            "text/html": [
+              "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"font-weight: bold\"> Trainable params: </span><span style=\"color: #00af00; text-decoration-color: #00af00\">3,938</span> (15.38 KB)\n",
+              "</pre>\n"
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "\u001b[1m Non-trainable params: \u001b[0m\u001b[38;5;34m128\u001b[0m (512.00 B)\n"
+            ],
+            "text/html": [
+              "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"font-weight: bold\"> Non-trainable params: </span><span style=\"color: #00af00; text-decoration-color: #00af00\">128</span> (512.00 B)\n",
+              "</pre>\n"
+            ]
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Epoch 1/300\n",
+            "209/209 - 6s - 27ms/step - accuracy: 0.4839 - loss: 0.7019 - val_accuracy: 0.5287 - val_loss: 0.6930 - learning_rate: 1.0000e-03\n",
+            "Epoch 2/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5011 - loss: 0.6967 - val_accuracy: 0.5063 - val_loss: 0.6930 - learning_rate: 1.0000e-03\n",
+            "Epoch 3/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5092 - loss: 0.6958 - val_accuracy: 0.5049 - val_loss: 0.6938 - learning_rate: 1.0000e-03\n",
+            "Epoch 4/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5134 - loss: 0.6946 - val_accuracy: 0.4923 - val_loss: 0.6951 - learning_rate: 1.0000e-03\n",
+            "Epoch 5/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5323 - loss: 0.6921 - val_accuracy: 0.5077 - val_loss: 0.6937 - learning_rate: 1.0000e-03\n",
+            "Epoch 6/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5272 - loss: 0.6931 - val_accuracy: 0.5259 - val_loss: 0.6918 - learning_rate: 1.0000e-03\n",
+            "Epoch 7/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5251 - loss: 0.6913 - val_accuracy: 0.5231 - val_loss: 0.6911 - learning_rate: 1.0000e-03\n",
+            "Epoch 8/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5356 - loss: 0.6903 - val_accuracy: 0.5301 - val_loss: 0.6901 - learning_rate: 1.0000e-03\n",
+            "Epoch 9/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5362 - loss: 0.6892 - val_accuracy: 0.5091 - val_loss: 0.6906 - learning_rate: 1.0000e-03\n",
+            "Epoch 10/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5263 - loss: 0.6907 - val_accuracy: 0.5399 - val_loss: 0.6886 - learning_rate: 1.0000e-03\n",
+            "Epoch 11/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5410 - loss: 0.6890 - val_accuracy: 0.5245 - val_loss: 0.6862 - learning_rate: 1.0000e-03\n",
+            "Epoch 12/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5476 - loss: 0.6839 - val_accuracy: 0.5524 - val_loss: 0.6809 - learning_rate: 1.0000e-03\n",
+            "Epoch 13/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5317 - loss: 0.6856 - val_accuracy: 0.5427 - val_loss: 0.6727 - learning_rate: 1.0000e-03\n",
+            "Epoch 14/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5347 - loss: 0.6859 - val_accuracy: 0.5455 - val_loss: 0.6798 - learning_rate: 1.0000e-03\n",
+            "Epoch 15/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5416 - loss: 0.6828 - val_accuracy: 0.5455 - val_loss: 0.6755 - learning_rate: 1.0000e-03\n",
+            "Epoch 16/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5518 - loss: 0.6788 - val_accuracy: 0.5343 - val_loss: 0.6778 - learning_rate: 1.0000e-03\n",
+            "Epoch 17/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5518 - loss: 0.6808 - val_accuracy: 0.5357 - val_loss: 0.6752 - learning_rate: 1.0000e-03\n",
+            "Epoch 18/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5650 - loss: 0.6791 - val_accuracy: 0.5497 - val_loss: 0.6832 - learning_rate: 1.0000e-03\n",
+            "Epoch 19/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5611 - loss: 0.6797 - val_accuracy: 0.5259 - val_loss: 0.6847 - learning_rate: 1.0000e-03\n",
+            "Epoch 20/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5617 - loss: 0.6766 - val_accuracy: 0.5399 - val_loss: 0.6756 - learning_rate: 1.0000e-03\n",
+            "Epoch 21/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5614 - loss: 0.6761 - val_accuracy: 0.5217 - val_loss: 0.6795 - learning_rate: 1.0000e-03\n",
+            "Epoch 22/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5677 - loss: 0.6771 - val_accuracy: 0.5538 - val_loss: 0.6796 - learning_rate: 1.0000e-03\n",
+            "Epoch 23/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5641 - loss: 0.6757 - val_accuracy: 0.5357 - val_loss: 0.6799 - learning_rate: 1.0000e-03\n",
+            "Epoch 24/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5539 - loss: 0.6772 - val_accuracy: 0.5329 - val_loss: 0.6765 - learning_rate: 1.0000e-03\n",
+            "Epoch 25/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5641 - loss: 0.6729 - val_accuracy: 0.5343 - val_loss: 0.6821 - learning_rate: 1.0000e-03\n",
+            "Epoch 26/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5593 - loss: 0.6760 - val_accuracy: 0.5203 - val_loss: 0.6843 - learning_rate: 1.0000e-03\n",
+            "Epoch 27/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5572 - loss: 0.6762 - val_accuracy: 0.5357 - val_loss: 0.6772 - learning_rate: 1.0000e-03\n",
+            "Epoch 28/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5758 - loss: 0.6705 - val_accuracy: 0.5371 - val_loss: 0.6749 - learning_rate: 1.0000e-03\n",
+            "Epoch 29/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5869 - loss: 0.6673 - val_accuracy: 0.5510 - val_loss: 0.6746 - learning_rate: 1.0000e-03\n",
+            "Epoch 30/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5713 - loss: 0.6674 - val_accuracy: 0.5259 - val_loss: 0.6790 - learning_rate: 1.0000e-03\n",
+            "Epoch 31/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5722 - loss: 0.6712 - val_accuracy: 0.5357 - val_loss: 0.6788 - learning_rate: 1.0000e-03\n",
+            "Epoch 32/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5755 - loss: 0.6689 - val_accuracy: 0.5343 - val_loss: 0.6815 - learning_rate: 1.0000e-03\n",
+            "Epoch 33/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5779 - loss: 0.6674 - val_accuracy: 0.5329 - val_loss: 0.6760 - learning_rate: 1.0000e-03\n",
+            "Epoch 34/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5935 - loss: 0.6605 - val_accuracy: 0.5301 - val_loss: 0.6727 - learning_rate: 5.0000e-04\n",
+            "Epoch 35/300\n",
+            "209/209 - 4s - 21ms/step - accuracy: 0.5881 - loss: 0.6638 - val_accuracy: 0.5399 - val_loss: 0.6725 - learning_rate: 5.0000e-04\n",
+            "Epoch 36/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5920 - loss: 0.6621 - val_accuracy: 0.5217 - val_loss: 0.6762 - learning_rate: 5.0000e-04\n",
+            "Epoch 37/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5980 - loss: 0.6563 - val_accuracy: 0.5203 - val_loss: 0.6747 - learning_rate: 5.0000e-04\n",
+            "Epoch 38/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5923 - loss: 0.6534 - val_accuracy: 0.5455 - val_loss: 0.6768 - learning_rate: 5.0000e-04\n",
+            "Epoch 39/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6031 - loss: 0.6519 - val_accuracy: 0.5273 - val_loss: 0.6783 - learning_rate: 5.0000e-04\n",
+            "Epoch 40/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5923 - loss: 0.6538 - val_accuracy: 0.5189 - val_loss: 0.6773 - learning_rate: 5.0000e-04\n",
+            "Epoch 41/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5959 - loss: 0.6536 - val_accuracy: 0.5552 - val_loss: 0.6767 - learning_rate: 5.0000e-04\n",
+            "Epoch 42/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5992 - loss: 0.6529 - val_accuracy: 0.5371 - val_loss: 0.6773 - learning_rate: 5.0000e-04\n",
+            "Epoch 43/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6013 - loss: 0.6537 - val_accuracy: 0.5273 - val_loss: 0.6775 - learning_rate: 5.0000e-04\n",
+            "Epoch 44/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6004 - loss: 0.6529 - val_accuracy: 0.5622 - val_loss: 0.6757 - learning_rate: 5.0000e-04\n",
+            "Epoch 45/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6019 - loss: 0.6522 - val_accuracy: 0.5371 - val_loss: 0.6754 - learning_rate: 5.0000e-04\n",
+            "Epoch 46/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6112 - loss: 0.6507 - val_accuracy: 0.5510 - val_loss: 0.6761 - learning_rate: 5.0000e-04\n",
+            "Epoch 47/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6085 - loss: 0.6482 - val_accuracy: 0.5469 - val_loss: 0.6818 - learning_rate: 5.0000e-04\n",
+            "Epoch 48/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6061 - loss: 0.6494 - val_accuracy: 0.5483 - val_loss: 0.6802 - learning_rate: 5.0000e-04\n",
+            "Epoch 49/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6022 - loss: 0.6466 - val_accuracy: 0.5427 - val_loss: 0.6765 - learning_rate: 5.0000e-04\n",
+            "Epoch 50/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.5995 - loss: 0.6548 - val_accuracy: 0.5315 - val_loss: 0.6777 - learning_rate: 5.0000e-04\n",
+            "Epoch 51/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6145 - loss: 0.6459 - val_accuracy: 0.5343 - val_loss: 0.6746 - learning_rate: 5.0000e-04\n",
+            "Epoch 52/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6133 - loss: 0.6427 - val_accuracy: 0.5441 - val_loss: 0.6793 - learning_rate: 5.0000e-04\n",
+            "Epoch 53/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6067 - loss: 0.6494 - val_accuracy: 0.5371 - val_loss: 0.6792 - learning_rate: 5.0000e-04\n",
+            "Epoch 54/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6193 - loss: 0.6437 - val_accuracy: 0.5231 - val_loss: 0.6810 - learning_rate: 5.0000e-04\n",
+            "Epoch 55/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6166 - loss: 0.6439 - val_accuracy: 0.5371 - val_loss: 0.6793 - learning_rate: 5.0000e-04\n",
+            "Epoch 56/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6103 - loss: 0.6439 - val_accuracy: 0.5357 - val_loss: 0.6798 - learning_rate: 2.5000e-04\n",
+            "Epoch 57/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6256 - loss: 0.6376 - val_accuracy: 0.5427 - val_loss: 0.6807 - learning_rate: 2.5000e-04\n",
+            "Epoch 58/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6151 - loss: 0.6402 - val_accuracy: 0.5413 - val_loss: 0.6833 - learning_rate: 2.5000e-04\n",
+            "Epoch 59/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6100 - loss: 0.6383 - val_accuracy: 0.5455 - val_loss: 0.6838 - learning_rate: 2.5000e-04\n",
+            "Epoch 60/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6265 - loss: 0.6377 - val_accuracy: 0.5329 - val_loss: 0.6843 - learning_rate: 2.5000e-04\n",
+            "Epoch 61/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6187 - loss: 0.6397 - val_accuracy: 0.5259 - val_loss: 0.6840 - learning_rate: 2.5000e-04\n",
+            "Epoch 62/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6205 - loss: 0.6426 - val_accuracy: 0.5273 - val_loss: 0.6822 - learning_rate: 2.5000e-04\n",
+            "Epoch 63/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6331 - loss: 0.6288 - val_accuracy: 0.5385 - val_loss: 0.6822 - learning_rate: 2.5000e-04\n",
+            "Epoch 64/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6226 - loss: 0.6353 - val_accuracy: 0.5483 - val_loss: 0.6806 - learning_rate: 2.5000e-04\n",
+            "Epoch 65/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6163 - loss: 0.6390 - val_accuracy: 0.5455 - val_loss: 0.6809 - learning_rate: 2.5000e-04\n",
+            "Epoch 66/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6400 - loss: 0.6278 - val_accuracy: 0.5399 - val_loss: 0.6825 - learning_rate: 2.5000e-04\n",
+            "Epoch 67/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6181 - loss: 0.6381 - val_accuracy: 0.5399 - val_loss: 0.6820 - learning_rate: 2.5000e-04\n",
+            "Epoch 68/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6331 - loss: 0.6338 - val_accuracy: 0.5413 - val_loss: 0.6810 - learning_rate: 2.5000e-04\n",
+            "Epoch 69/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6319 - loss: 0.6273 - val_accuracy: 0.5455 - val_loss: 0.6811 - learning_rate: 2.5000e-04\n",
+            "Epoch 70/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6319 - loss: 0.6300 - val_accuracy: 0.5329 - val_loss: 0.6833 - learning_rate: 2.5000e-04\n",
+            "Epoch 71/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6244 - loss: 0.6279 - val_accuracy: 0.5371 - val_loss: 0.6839 - learning_rate: 2.5000e-04\n",
+            "Epoch 72/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6325 - loss: 0.6300 - val_accuracy: 0.5343 - val_loss: 0.6857 - learning_rate: 2.5000e-04\n",
+            "Epoch 73/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6358 - loss: 0.6261 - val_accuracy: 0.5189 - val_loss: 0.6863 - learning_rate: 2.5000e-04\n",
+            "Epoch 74/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6250 - loss: 0.6343 - val_accuracy: 0.5497 - val_loss: 0.6870 - learning_rate: 2.5000e-04\n",
+            "Epoch 75/300\n",
+            "209/209 - 4s - 20ms/step - accuracy: 0.6220 - loss: 0.6358 - val_accuracy: 0.5287 - val_loss: 0.6827 - learning_rate: 2.5000e-04\n",
+            "\n",
+            "================= FINAL ACCURACY =================\n",
+            "Train Accuracy : 0.6334\n",
+            "Val Accuracy   : 0.5399\n",
+            "Test Accuracy  : 0.5185\n",
+            "==================================================\n"
+          ]
+        }
+      ],
+      "source": [
+        "# ==========================================================\n",
+        "# ONE-HOT ENCODING\n",
+        "# ==========================================================\n",
+        "#y_train = to_categorical(y_train, 2)\n",
+        "#y_val   = to_categorical(y_val, 2)\n",
+        "#y_test  = to_categorical(y_test, 2)\n",
+        "\n",
+        "# ==========================================================\n",
+        "# BUILD EEGNET MODEL\n",
+        "# ==========================================================\n",
+        "model = EEGNet(\n",
+        "    nb_classes=2,\n",
+        "    Chans=X.shape[1],\n",
+        "    Samples=X.shape[2]\n",
+        ")\n",
+        "\n",
+        "model.compile(\n",
+        "    optimizer=Adam(learning_rate=1e-3),\n",
+        "    loss=\"categorical_crossentropy\",\n",
+        "    metrics=[\"accuracy\"]\n",
+        ")\n",
+        "\n",
+        "model.summary()\n",
+        "\n",
+        "# ==========================================================\n",
+        "# CALLBACKS\n",
+        "# ==========================================================\n",
+        "callbacks = [\n",
+        "    EarlyStopping(\n",
+        "        monitor=\"val_loss\",\n",
+        "        patience=40,\n",
+        "        restore_best_weights=True\n",
+        "    ),\n",
+        "    ReduceLROnPlateau(\n",
+        "        monitor=\"val_loss\",\n",
+        "        patience=20,\n",
+        "        factor=0.5,\n",
+        "        min_lr=1e-5\n",
+        "    )\n",
+        "]\n",
+        "\n",
+        "# ==========================================================\n",
+        "# TRAIN MODEL\n",
+        "# ==========================================================\n",
+        "history = model.fit(\n",
+        "    X_train, y_train,\n",
+        "    validation_data=(X_val, y_val),\n",
+        "    epochs=300,\n",
+        "    batch_size=16,\n",
+        "    callbacks=callbacks,\n",
+        "    verbose=2\n",
+        ")\n",
+        "\n",
+        "\n",
+        "# EVALUATION\n",
+        "\n",
+        "train_loss, train_acc = model.evaluate(X_train, y_train, verbose=0)\n",
+        "val_loss, val_acc     = model.evaluate(X_val, y_val, verbose=0)\n",
+        "test_loss, test_acc   = model.evaluate(X_test, y_test, verbose=0)\n",
+        "\n",
+        "print(\"\\n================= FINAL ACCURACY =================\")\n",
+        "print(f\"Train Accuracy : {train_acc:.4f}\")\n",
+        "print(f\"Val Accuracy   : {val_acc:.4f}\")\n",
+        "print(f\"Test Accuracy  : {test_acc:.4f}\")\n",
+        "print(\"==================================================\")"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# ==========================================================\n",
+        "# CONFUSION MATRIX + F1 SCORE (ONE-SHOT CODE)\n",
+        "# ==========================================================\n",
+        "\n",
+        "\n",
+        "import matplotlib.pyplot as plt\n",
+        "import seaborn as sns\n",
+        "\n",
+        "from sklearn.metrics import (\n",
+        "    confusion_matrix,\n",
+        "    f1_score,\n",
+        "    precision_score,\n",
+        "    recall_score,\n",
+        "    classification_report\n",
+        ")\n",
+        "\n",
+        "# ----------------------------------------------------------\n",
+        "# 1. Get predictions from trained model\n",
+        "# ----------------------------------------------------------\n",
+        "y_pred_prob = model.predict(X_test)\n",
+        "\n",
+        "# Convert probabilities to class labels\n",
+        "y_pred = np.argmax(y_pred_prob, axis=1)\n",
+        "\n",
+        "# Convert one-hot encoded true labels to class labels\n",
+        "y_true = np.argmax(y_test, axis=1)\n",
+        "\n",
+        "# ----------------------------------------------------------\n",
+        "# 2. Confusion Matrix\n",
+        "# ----------------------------------------------------------\n",
+        "cm = confusion_matrix(y_true, y_pred)\n",
+        "\n",
+        "print(\"\\nConfusion Matrix:\")\n",
+        "print(cm)\n",
+        "\n",
+        "# ----------------------------------------------------------\n",
+        "# 3. Plot Confusion Matrix\n",
+        "# ----------------------------------------------------------\n",
+        "plt.figure(figsize=(4, 4))\n",
+        "sns.heatmap(\n",
+        "    cm,\n",
+        "    annot=True,\n",
+        "    fmt=\"d\",\n",
+        "    cmap=\"Blues\",\n",
+        "    xticklabels=[\"Class 0\", \"Class 1\"],\n",
+        "    yticklabels=[\"Class 0\", \"Class 1\"]\n",
+        ")\n",
+        "plt.xlabel(\"Predicted Label\")\n",
+        "plt.ylabel(\"True Label\")\n",
+        "plt.title(\"Confusion Matrix\")\n",
+        "plt.tight_layout()\n",
+        "plt.show()\n",
+        "\n",
+        "# ----------------------------------------------------------\n",
+        "# 4. Metrics: F1, Precision, Recall\n",
+        "# ----------------------------------------------------------\n",
+        "f1        = f1_score(y_true, y_pred, average=\"binary\")\n",
+        "precision = precision_score(y_true, y_pred, average=\"binary\")\n",
+        "recall    = recall_score(y_true, y_pred, average=\"binary\")\n",
+        "\n",
+        "print(\"\\n================= METRICS =================\")\n",
+        "print(f\"Precision : {precision:.4f}\")\n",
+        "print(f\"Recall    : {recall:.4f}\")\n",
+        "print(f\"F1 Score  : {f1:.4f}\")\n",
+        "print(\"===========================================\")\n",
+        "\n",
+        "# ----------------------------------------------------------\n",
+        "# 5. Full Classification Report\n",
+        "# ----------------------------------------------------------\n",
+        "print(\"\\nClassification Report:\")\n",
+        "print(classification_report(\n",
+        "    y_true,\n",
+        "    y_pred,\n",
+        "    target_names=[\"Class 0\", \"Class 1\"]\n",
+        "))\n"
+      ],
+      "metadata": {
+        "id": "iGp8pHUnCiPx",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "fe9b1302-e1b1-4232-bb35-9233a3eef415"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "\u001b[1m21/21\u001b[0m \u001b[32m━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[37m\u001b[0m \u001b[1m0s\u001b[0m 7ms/step\n",
+            "\n",
+            "Confusion Matrix:\n",
+            "[[182 141]\n",
+            " [172 155]]\n"
+          ]
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": [
+              "<Figure size 400x400 with 2 Axes>"
+            ],
+            "image/png": "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\n"
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "\n",
+            "================= METRICS =================\n",
+            "Precision : 0.5236\n",
+            "Recall    : 0.4740\n",
+            "F1 Score  : 0.4976\n",
+            "===========================================\n",
+            "\n",
+            "Classification Report:\n",
+            "              precision    recall  f1-score   support\n",
+            "\n",
+            "     Class 0       0.51      0.56      0.54       323\n",
+            "     Class 1       0.52      0.47      0.50       327\n",
+            "\n",
+            "    accuracy                           0.52       650\n",
+            "   macro avg       0.52      0.52      0.52       650\n",
+            "weighted avg       0.52      0.52      0.52       650\n",
+            "\n"
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "machine_shape": "hm",
+      "gpuType": "V6E1",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "display_name": "Python 3",
+      "name": "python3"
+    },
+    "language_info": {
+      "name": "python"
+    },
+    "accelerator": "TPU"
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}
